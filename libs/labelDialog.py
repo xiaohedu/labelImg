@@ -20,7 +20,7 @@ class LabelDialog(QDialog):
         self.label1.setText('Catogory: ')
 
         self.edit = QLineEdit()
-        self.edit.move(30, -20)
+        # self.edit.move(30, -20)
         self.edit.setText(text)
         self.edit.setFixedWidth(200)
         self.edit.setValidator(labelValidator())
@@ -30,7 +30,7 @@ class LabelDialog(QDialog):
         self.label2.setText('TrackID: ')
         self.trackedit = QLineEdit()
         self.trackedit.setText(str(trackid))
-        self.trackedit.setFixedWidth(30)
+        self.trackedit.setFixedWidth(40)
         self.trackedit.setValidator(QIntValidator())
         self.trackedit.editingFinished.connect(self.postProcess1)
 

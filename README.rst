@@ -11,26 +11,19 @@ LabelImg is a graphical image annotation tool.
 
 It is written in Python and uses Qt for its graphical interface.
 
-Annotations are saved as XML files in PASCAL VOC format, the format used
+Annotations are saved as txt files in YOLO format, supported by `Darknet <https://pjreddie.com/darknet/>`__, and also XML files in PASCAL VOC format, the format used
 by `ImageNet <http://www.image-net.org/>`__.
 
 .. image:: https://raw.githubusercontent.com/tzutalin/labelImg/master/demo/demo3.jpg
      :alt: Demo Image
 
-.. image:: https://raw.githubusercontent.com/tzutalin/labelImg/master/demo/demo.jpg
+.. image:: https://raw.githubusercontent.com/tzutalin/labelImg/master/demo/demo0.jpg
      :alt: Demo Image
 
 `Watch a demo video <https://youtu.be/p0nR2YsCY_U>`__
 
 Installation
 ------------------
-
-Download prebuilt binaries
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
--  `Windows & Linux <https://tzutalin.github.io/labelImg/>`__
-
--  macOS. Binaries for macOS are not yet available. Help would be appreciated. At present, it must be `built from source <#macos>`__.
 
 Build from source
 ~~~~~~~~~~~~~~~~~
@@ -167,7 +160,7 @@ You can pull the image which has all of the installed and required dependencies.
 Usage
 -----
 
-Steps (PascalVOC)
+Steps (YOLO)
 ~~~~~
 
 1. Build and launch using the instructions above.
@@ -182,18 +175,18 @@ The annotation will be saved to the folder you specify.
 
 You can refer to the below hotkeys to speed up your workflow.
 
-Steps (YOLO)
+Steps (PascalVOC)
 ~~~~~
 
 1. In ``data/predefined_classes.txt`` define the list of classes that will be used for your training.
 
 2. Build and launch using the instructions above.
 
-3. Right below "Save" button in toolbar, click "PascalVOC" button to switch to YOLO format.
+3. Right below "Save" button in toolbar, click "YOLO" button to switch to PascalVOC format.
 
 4. You may use Open/OpenDIR to process single or multiple images. When finished with single image, click save.
 
-A txt file of yolo format will be saved in the same folder as your image with same name. A file named "classes.txt" is saved to that folder too. "classes.txt" defines the list of class names that your yolo label refers to.
+A xml file of PascalVOC format will be saved in the same folder as your image with same name. A file named "classes.txt" is saved to that folder too. "classes.txt" defines the list of class names that your yolo label refers to.
 
 Note:
 
@@ -238,11 +231,6 @@ Hotkeys
 +------------+--------------------------------------------+
 | ↑→↓←       | Keyboard arrows to move selected rect box  |
 +------------+--------------------------------------------+
-
-How to contribute
-~~~~~~~~~~~~~~~~~
-
-Send a pull request
 
 License
 ~~~~~~~

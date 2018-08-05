@@ -17,7 +17,7 @@ by `ImageNet <http://www.image-net.org/>`__.
 .. image:: https://raw.githubusercontent.com/zhanghanduo/labelImg/master/demo/demo3.jpg
      :alt: Demo Image
 
-.. image:: https://raw.githubusercontent.com/zhanghanduo/labelImg/master/demo/demo0.jpg
+.. image:: https://raw.githubusercontent.com/zhanghanduo/labelImg/master/demo/demo0.png
      :alt: Demo Image
 
 `Watch a demo video <https://youtu.be/p0nR2YsCY_U>`__

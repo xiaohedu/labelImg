@@ -619,6 +619,7 @@ class Canvas(QWidget):
     def setLastLabel(self, text, line_color  = None, fill_color = None):
         assert text
         self.shapes[-1].label = text
+        # self.shapes[-1].trackid = trackid
         if line_color:
             self.shapes[-1].line_color = line_color
         

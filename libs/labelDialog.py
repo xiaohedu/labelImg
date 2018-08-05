@@ -17,7 +17,7 @@ class LabelDialog(QDialog):
         super(LabelDialog, self).__init__(parent)
 
         self.label1 = QLabel()
-        self.label1.setText('Catogory: ')
+        self.label1.setText('Category: ')
 
         self.edit = QLineEdit()
         # self.edit.move(30, -20)
@@ -26,13 +26,13 @@ class LabelDialog(QDialog):
         self.edit.setValidator(labelValidator())
         self.edit.editingFinished.connect(self.postProcess)
 
-        self.label2 = QLabel()
-        self.label2.setText('TrackID: ')
-        self.trackedit = QLineEdit()
-        self.trackedit.setText(str(trackid))
-        self.trackedit.setFixedWidth(40)
-        self.trackedit.setValidator(QIntValidator())
-        self.trackedit.editingFinished.connect(self.postProcess1)
+        # self.label2 = QLabel()
+        # self.label2.setText('TrackID: ')
+        # self.trackedit = QLineEdit()
+        # self.trackedit.setText(str(trackid))
+        # self.trackedit.setFixedWidth(40)
+        # self.trackedit.setValidator(QIntValidator())
+        # self.trackedit.editingFinished.connect(self.postProcess1)
 
         model = QStringListModel()
         model.setStringList(listItem)
@@ -43,8 +43,8 @@ class LabelDialog(QDialog):
         layout = QVBoxLayout()
         layout.addWidget(self.label1)
         layout.addWidget(self.edit)
-        layout.addWidget(self.label2)
-        layout.addWidget(self.trackedit)
+        # layout.addWidget(self.label2)
+        # layout.addWidget(self.trackedit)
         self.buttonBox = bb = BB(BB.Ok | BB.Cancel, Qt.Horizontal, self)
         bb.button(BB.Ok).setIcon(newIcon('done'))
         bb.button(BB.Cancel).setIcon(newIcon('undo'))
@@ -64,11 +64,11 @@ class LabelDialog(QDialog):
 
     def validate(self):
         try:
-            if (self.edit.text().trimmed()) or (self.trackedit.text().trimmed()):
+            if self.edit.text().trimmed():
                 self.accept()
         except AttributeError:
             # PyQt5: AttributeError: 'str' object has no attribute 'trimmed'
-            if (self.edit.text().strip()) or (self.trackedit.text().strip()):
+            if self.edit.text().strip():
                 self.accept()
 
     def postProcess(self):
@@ -78,17 +78,18 @@ class LabelDialog(QDialog):
             # PyQt5: AttributeError: 'str' object has no attribute 'trimmed'
             self.edit.setText(self.edit.text())
 
-    def postProcess1(self):
-        try:
-            self.trackedit.setText(self.trackedit.text().trimmed())
-        except AttributeError:
-            # PyQt5: AttributeError: 'str' object has no attribute 'trimmed'
-            self.trackedit.setText(self.trackedit.text())
+    # def postProcess1(self):
+    #     try:
+    #         self.trackedit.setText(self.trackedit.text().trimmed())
+    #     except AttributeError:
+    #         # PyQt5: AttributeError: 'str' object has no attribute 'trimmed'
+    #         self.trackedit.setText(self.trackedit.text())
 
     def popUp(self, text='', move=True):
         self.edit.setText(text)
         self.edit.setSelection(0, len(text))
         self.edit.setFocus(Qt.PopupFocusReason)
+        # trackid = int(self.trackedit.text())
         if move:
             self.move(QCursor.pos())
         return self.edit.text() if self.exec_() else None

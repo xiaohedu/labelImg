@@ -22,6 +22,7 @@ except ImportError:
     # http://stackoverflow.com/questions/21217399/pyqt4-qtcore-qvariant-object-instead-of-a-string
     if sys.version_info.major >= 3:
         import sip
+
         sip.setapi('QVariant', 2)
     from PyQt4.QtGui import *
     from PyQt4.QtCore import *
@@ -47,11 +48,13 @@ from libs.version import __version__
 
 __appname__ = 'labelImg'
 
+
 # Utility functions and classes.
 
 def have_qstring():
     '''p3/qt5 get rid of QString wrapper as py3 has native unicode str type'''
     return not (sys.version_info.major >= 3 or QT_VERSION_STR.startswith('5.'))
+
 
 def util_qt_strlistclass():
     return QStringList if have_qstring() else list
@@ -126,6 +129,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.itemsToShapes = {}
         self.shapesToItems = {}
         self.prevLabelText = ''
+        self.prevTrackid = 0
 
         listLayout = QVBoxLayout()
         listLayout.setContentsMargins(0, 0, 0, 0)
@@ -144,12 +148,25 @@ class MainWindow(QMainWindow, WindowMixin):
         self.diffcButton = QCheckBox(u'difficult')
         self.diffcButton.setChecked(False)
         self.diffcButton.stateChanged.connect(self.btnstate)
+        self.label_track = QLabel()
+        self.label_track.setText('TrackID: ')
+        self.label_track_record = QLabel()
+        self.label_track_record.setText(str(0))
+        self.trackState = QLineEdit()
+        self.trackState.setText(str(0))
+        self.trackState.setFixedWidth(40)
+        self.trackState.setValidator(QIntValidator())
+        self.trackState.editingFinished.connect(self.btnstate)
+
         self.editButton = QToolButton()
         self.editButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
         # Add some of widgets to listLayout
         listLayout.addWidget(self.editButton)
         listLayout.addWidget(self.diffcButton)
+        listLayout.addWidget(self.label_track)
+        listLayout.addWidget(self.label_track_record)
+        listLayout.addWidget(self.trackState)
         listLayout.addWidget(useDefaultLabelContainer)
 
         # Create and add a widget for showing current label items
@@ -238,8 +255,8 @@ class MainWindow(QMainWindow, WindowMixin):
         save = action('&Save', self.saveFile,
                       'Ctrl+S', 'save', u'Save labels to file', enabled=False)
 
-        save_format = action('&PascalVOC', self.change_format,
-                      'Ctrl+', 'format_voc', u'Change save format', enabled=True)
+        save_format = action('&YOLO', self.change_format,
+                             'Ctrl+', 'format_yolo', u'Change save format', enabled=True)
 
         saveAs = action('&Save As', self.saveFileAs,
                         'Ctrl+Shift+S', 'save-as', u'Save labels to a different file', enabled=False)
@@ -333,7 +350,8 @@ class MainWindow(QMainWindow, WindowMixin):
             self.popLabelListMenu)
 
         # Store actions for further handling.
-        self.actions = struct(save=save, save_format=save_format, saveAs=saveAs, open=open, close=close, resetAll = resetAll,
+        self.actions = struct(save=save, save_format=save_format, saveAs=saveAs, open=open, close=close,
+                              resetAll=resetAll,
                               lineColor=color1, create=create, delete=delete, edit=edit, copy=copy,
                               createMode=createMode, editMode=editMode, advancedMode=advancedMode,
                               shapeLineColor=shapeLineColor, shapeFillColor=shapeFillColor,
@@ -378,7 +396,8 @@ class MainWindow(QMainWindow, WindowMixin):
         self.paintLabelsOption.triggered.connect(self.togglePaintLabelsOption)
 
         addActions(self.menus.file,
-                   (open, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
+                   (open, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs,
+                    close, resetAll, quit))
         addActions(self.menus.help, (help, showInfo))
         addActions(self.menus.view, (
             self.autoSaving,
@@ -399,7 +418,8 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.tools = self.toolbar('Tools')
         self.actions.beginner = (
-            open, opendir, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create, copy, delete, None,
+            open, opendir, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create, copy,
+            delete, None,
             zoomIn, zoom, zoomOut, fitWindow, fitWidth)
 
         self.actions.advanced = (
@@ -421,6 +441,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.fit_window = False
         # Add Chris
         self.difficult = False
+        self.trackid = 0
 
         ## Fix the compatible issue for qt4 and qt5. Convert the QStringList to python list
         if settings.get(SETTING_RECENT_FILES):
@@ -448,6 +469,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.canvas.setDrawingColor(self.lineColor)
         # Add chris
         Shape.difficult = self.difficult
+        Shape.trackid = self.trackid
 
         def xbool(x):
             if isinstance(x, QVariant):
@@ -497,8 +519,10 @@ class MainWindow(QMainWindow, WindowMixin):
             LabelFile.suffix = TXT_EXT
 
     def change_format(self):
-        if self.usingPascalVocFormat: self.set_format(FORMAT_YOLO)
-        elif self.usingYoloFormat: self.set_format(FORMAT_PASCALVOC)
+        if self.usingPascalVocFormat:
+            self.set_format(FORMAT_YOLO)
+        elif self.usingYoloFormat:
+            self.set_format(FORMAT_PASCALVOC)
 
     def noShapes(self):
         return not self.itemsToShapes
@@ -525,7 +549,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.canvas.menus[0].clear()
         addActions(self.canvas.menus[0], menu)
         self.menus.edit.clear()
-        actions = (self.actions.create,) if self.beginner()\
+        actions = (self.actions.create,) if self.beginner() \
             else (self.actions.createMode, self.actions.editMode)
         addActions(self.menus.edit, actions + self.actions.editMenu)
 
@@ -640,6 +664,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         def exists(filename):
             return os.path.exists(filename)
+
         menu = self.menus.recentFiles
         menu.clear()
         files = [f for f in self.recentFiles if f !=
@@ -673,17 +698,18 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.loadFile(filename)
 
     # Add chris
-    def btnstate(self, item= None):
+    def btnstate(self, item=None):
         """ Function to handle difficult examples
         Update on each object """
         if not self.canvas.editing():
             return
 
         item = self.currentItem()
-        if not item: # If not selected Item, take the first one
-            item = self.labelList.item(self.labelList.count()-1)
+        if not item:  # If not selected Item, take the first one
+            item = self.labelList.item(self.labelList.count() - 1)
 
         difficult = self.diffcButton.isChecked()
+        trackid = int(self.trackState.text())
 
         try:
             shape = self.itemsToShapes[item]
@@ -693,6 +719,15 @@ class MainWindow(QMainWindow, WindowMixin):
         try:
             if difficult != shape.difficult:
                 shape.difficult = difficult
+                self.setDirty()
+            else:  # User probably changed item visibility
+                self.canvas.setShapeVisible(shape, item.checkState() == Qt.Checked)
+        except:
+            pass
+
+        try:
+            if (trackid != shape.trackid) and (trackid != 0):
+                shape.trackid = trackid
                 self.setDirty()
             else:  # User probably changed item visibility
                 self.canvas.setShapeVisible(shape, item.checkState() == Qt.Checked)
@@ -738,11 +773,12 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def loadLabels(self, shapes):
         s = []
-        for label, points, line_color, fill_color, difficult in shapes:
-            shape = Shape(label=label)
+        for trackid, label, points, line_color, fill_color, difficult in shapes:
+            shape = Shape(trackid=trackid, label=label)
             for x, y in points:
                 shape.addPoint(QPointF(x, y))
             shape.difficult = difficult
+            shape.trackid = trackid
             shape.close()
             s.append(shape)
 
@@ -767,28 +803,29 @@ class MainWindow(QMainWindow, WindowMixin):
             self.labelFile.verified = self.canvas.verified
 
         def format_shape(s):
-            return dict(label=s.label,
+            return dict(trackid=s.trackid,
+                        label=s.label,
                         line_color=s.line_color.getRgb(),
                         fill_color=s.fill_color.getRgb(),
                         points=[(p.x(), p.y()) for p in s.points],
-                       # add chris
-                        difficult = s.difficult)
+                        # add chris
+                        difficult=s.difficult)
 
         shapes = [format_shape(shape) for shape in self.canvas.shapes]
-        # Can add differrent annotation formats here
+        # Can add different annotation formats here
         try:
             if self.usingPascalVocFormat is True:
                 if ustr(annotationFilePath[-4:]) != ".xml":
                     annotationFilePath += XML_EXT
-                print ('Img: ' + self.filePath + ' -> Its xml: ' + annotationFilePath)
+                print('Img: ' + self.filePath + ' -> Its xml: ' + annotationFilePath)
                 self.labelFile.savePascalVocFormat(annotationFilePath, shapes, self.filePath, self.imageData,
                                                    self.lineColor.getRgb(), self.fillColor.getRgb())
             elif self.usingYoloFormat is True:
                 if annotationFilePath[-4:] != ".txt":
                     annotationFilePath += TXT_EXT
-                print ('Img: ' + self.filePath + ' -> Its txt: ' + annotationFilePath)
+                print('Img: ' + self.filePath + ' -> Its txt: ' + annotationFilePath)
                 self.labelFile.saveYoloFormat(annotationFilePath, shapes, self.filePath, self.imageData, self.labelHist,
-                                                   self.lineColor.getRgb(), self.fillColor.getRgb())
+                                              self.lineColor.getRgb(), self.fillColor.getRgb())
             else:
                 self.labelFile.save(annotationFilePath, shapes, self.filePath, self.imageData,
                                     self.lineColor.getRgb(), self.fillColor.getRgb())
@@ -810,6 +847,8 @@ class MainWindow(QMainWindow, WindowMixin):
             shape = self.itemsToShapes[item]
             # Add Chris
             self.diffcButton.setChecked(shape.difficult)
+            self.label_track_record.setText(str(shape.trackid))
+            self.trackstate.setText(str(shape.trackid))
 
     def labelItemChanged(self, item):
         shape = self.itemsToShapes[item]
@@ -845,6 +884,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.diffcButton.setChecked(False)
         if text is not None:
             self.prevLabelText = text
+            # self.prevTrackid = trackid_
             generate_color = generateColorByText(text)
             shape = self.canvas.setLastLabel(text, generate_color, generate_color)
             self.addLabel(shape)
@@ -1029,16 +1069,16 @@ class MainWindow(QMainWindow, WindowMixin):
 
             # Default : select last item if there is at least one item
             if self.labelList.count():
-                self.labelList.setCurrentItem(self.labelList.item(self.labelList.count()-1))
-                self.labelList.item(self.labelList.count()-1).setSelected(True)
+                self.labelList.setCurrentItem(self.labelList.item(self.labelList.count() - 1))
+                self.labelList.item(self.labelList.count() - 1).setSelected(True)
 
             self.canvas.setFocus(True)
             return True
         return False
 
     def resizeEvent(self, event):
-        if self.canvas and not self.image.isNull()\
-           and self.zoomMode != self.MANUAL_ZOOM:
+        if self.canvas and not self.image.isNull() \
+                and self.zoomMode != self.MANUAL_ZOOM:
             self.adjustScale()
         super(MainWindow, self).resizeEvent(event)
 
@@ -1100,6 +1140,7 @@ class MainWindow(QMainWindow, WindowMixin):
         settings[SETTING_SINGLE_CLASS] = self.singleClassMode.isChecked()
         settings[SETTING_PAINT_LABEL] = self.paintLabelsOption.isChecked()
         settings.save()
+
     ## User Dialogs ##
 
     def loadRecent(self, filename):
@@ -1126,8 +1167,9 @@ class MainWindow(QMainWindow, WindowMixin):
             path = '.'
 
         dirpath = ustr(QFileDialog.getExistingDirectory(self,
-                                                       '%s - Save annotations to the directory' % __appname__, path,  QFileDialog.ShowDirsOnly
-                                                       | QFileDialog.DontResolveSymlinks))
+                                                        '%s - Save annotations to the directory' % __appname__, path,
+                                                        QFileDialog.ShowDirsOnly
+                                                        | QFileDialog.DontResolveSymlinks))
 
         if dirpath is not None and len(dirpath) > 1:
             self.defaultSaveDir = dirpath
@@ -1142,11 +1184,11 @@ class MainWindow(QMainWindow, WindowMixin):
             self.statusBar().show()
             return
 
-        path = os.path.dirname(ustr(self.filePath))\
+        path = os.path.dirname(ustr(self.filePath)) \
             if self.filePath else '.'
         if self.usingPascalVocFormat:
             filters = "Open Annotation XML file (%s)" % ' '.join(['*.xml'])
-            filename = ustr(QFileDialog.getOpenFileName(self,'%s - Choose a xml file' % __appname__, path, filters))
+            filename = ustr(QFileDialog.getOpenFileName(self, '%s - Choose a xml file' % __appname__, path, filters))
             if filename:
                 if isinstance(filename, (tuple, list)):
                     filename = filename[0]
@@ -1163,8 +1205,8 @@ class MainWindow(QMainWindow, WindowMixin):
             defaultOpenDirPath = os.path.dirname(self.filePath) if self.filePath else '.'
 
         targetDirPath = ustr(QFileDialog.getExistingDirectory(self,
-                                                     '%s - Open Directory' % __appname__, defaultOpenDirPath,
-                                                     QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks))
+                                                              '%s - Open Directory' % __appname__, defaultOpenDirPath,
+                                                              QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks))
         self.importDirImages(targetDirPath)
 
     def importDirImages(self, dirpath):
@@ -1183,7 +1225,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def verifyImg(self, _value=False):
         # Proceding next image without dialog if having any label
-         if self.filePath is not None:
+        if self.filePath is not None:
             try:
                 self.labelFile.toggleVerify()
             except AttributeError:
@@ -1294,7 +1336,7 @@ class MainWindow(QMainWindow, WindowMixin):
         dlg.setOption(QFileDialog.DontUseNativeDialog, False)
         if dlg.exec_():
             fullFilePath = ustr(dlg.selectedFiles()[0])
-            return os.path.splitext(fullFilePath)[0] # Return file path without the extension.
+            return os.path.splitext(fullFilePath)[0]  # Return file path without the extension.
         return ''
 
     def _saveFile(self, annotationFilePath):
@@ -1407,7 +1449,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.set_format(FORMAT_YOLO)
         tYoloParseReader = YoloReader(txtPath, self.image)
         shapes = tYoloParseReader.getShapes()
-        print (shapes)
+        print(shapes)
         self.loadLabels(shapes)
         self.canvas.verified = tYoloParseReader.verified
 
@@ -1415,6 +1457,7 @@ class MainWindow(QMainWindow, WindowMixin):
         paintLabelsOptionChecked = self.paintLabelsOption.isChecked()
         for shape in self.canvas.shapes:
             shape.paintLabel = paintLabelsOptionChecked
+
 
 def inverted(color):
     return QColor(*[255 - v for v in color.getRgb()])
@@ -1451,6 +1494,7 @@ def main():
     '''construct main app and run it'''
     app, _win = get_main_app(sys.argv)
     return app.exec_()
+
 
 if __name__ == '__main__':
     sys.exit(main())

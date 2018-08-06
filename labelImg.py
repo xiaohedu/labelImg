@@ -726,7 +726,7 @@ class MainWindow(QMainWindow, WindowMixin):
             pass
 
         try:
-            if (trackid != shape.trackid) and (trackid != 0):
+            if trackid != shape.trackid:
                 shape.trackid = trackid
                 self.setDirty()
             else:  # User probably changed item visibility

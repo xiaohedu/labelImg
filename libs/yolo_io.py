@@ -46,6 +46,17 @@ class YOLOWriter:
 
         return trackid, classIndex, xcen, ycen, w, h
 
+    def BndBox2CustomLine(self, box, classList=[]):
+        xmin = box['xmin']
+        xmax = box['xmax']
+        ymin = box['ymin']
+        ymax = box['ymax']
+        classIndex = classList.index(box['name'])
+
+        trackid = box['trackid']
+
+        return trackid, classIndex, xmin, ymin, xmax, ymax
+
     def save(self, classList=[], targetFile=None):
 
         out_file = None #Update yolo .txt
@@ -64,9 +75,13 @@ class YOLOWriter:
 
 
         for box in self.boxlist:
-            trackid, classIndex, xcen, ycen, w, h = self.BndBox2YoloLine(box, classList)
-            print (trackid, classIndex, xcen, ycen, w, h)
-            out_file.write("%d, %d, %.6f, %.6f, %.6f, %.6f\n" % (trackid, classIndex, xcen, ycen, w, h))
+            # trackid, classIndex, xcen, ycen, w, h = self.BndBox2YoloLine(box, classList)
+            # print(trackid, classIndex, xcen, ycen, w, h)
+            # out_file.write("%d, %d, %.6f, %.6f, %.6f, %.6f\n" % (trackid, classIndex, xcen, ycen, w, h))
+
+            trackid, classIndex, xmin, ymin, xmax, ymax = self.BndBox2CustomLine(box, classList)
+            print(trackid, xmin, ymin, xmax, ymax, classIndex)
+            out_file.write("%d, %d, %d, %d, %d, %d\n" % (trackid, xmin, ymin, xmax, ymax, classIndex))
 
         print (classList)
         print (out_class_file)
@@ -136,8 +151,10 @@ class YoloReader:
     def parseYoloFormat(self):
         bndBoxFile = open(self.filepath, 'r')
         for bndBox in bndBoxFile:
-            trackid, classIndex, xcen, ycen, w, h = bndBox.split(' ')
-            label, xmin, ymin, xmax, ymax = self.yoloLine2Shape(classIndex, xcen, ycen, w, h)
+            # trackid, classIndex, xcen, ycen, w, h = bndBox.split(' ')
+            # label, xmin, ymin, xmax, ymax = self.yoloLine2Shape(classIndex, xcen, ycen, w, h)/
+            trackid, xmin, ymin, xmax, ymax, classIndex = bndBox.split(',')
+            label = self.classes[int(classIndex)]
 
             # Caveat: difficult flag is discarded when saved as yolo format.
             self.addShape(trackid, label, xmin, ymin, xmax, ymax, False)

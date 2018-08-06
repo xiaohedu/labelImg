@@ -10,6 +10,7 @@ import codecs
 TXT_EXT = '.txt'
 ENCODE_METHOD = 'utf-8'
 
+
 class YOLOWriter:
 
     def __init__(self, foldername, filename, imgSize, databaseSrc='Unknown', localImgPath=None):
@@ -59,12 +60,12 @@ class YOLOWriter:
 
     def save(self, classList=[], targetFile=None):
 
-        out_file = None #Update yolo .txt
-        out_class_file = None   #Update class list .txt
+        out_file = None  # Update yolo .txt
+        out_class_file = None  # Update class list .txt
 
         if targetFile is None:
             out_file = open(
-            self.filename + TXT_EXT, 'w', encoding=ENCODE_METHOD)
+                self.filename + TXT_EXT, 'w', encoding=ENCODE_METHOD)
             classesFile = os.path.join(os.path.dirname(os.path.abspath(self.filename)), "classes.txt")
             out_class_file = open(classesFile, 'w')
 
@@ -72,7 +73,6 @@ class YOLOWriter:
             out_file = codecs.open(targetFile, 'w', encoding=ENCODE_METHOD)
             classesFile = os.path.join(os.path.dirname(os.path.abspath(targetFile)), "classes.txt")
             out_class_file = open(classesFile, 'w')
-
 
         for box in self.boxlist:
             # trackid, classIndex, xcen, ycen, w, h = self.BndBox2YoloLine(box, classList)
@@ -83,14 +83,13 @@ class YOLOWriter:
             print(trackid, xmin, ymin, xmax, ymax, classIndex)
             out_file.write("%d, %d, %d, %d, %d, %d\n" % (trackid, xmin, ymin, xmax, ymax, classIndex))
 
-        print (classList)
-        print (out_class_file)
+        print(classList)
+        print(out_class_file)
         for c in classList:
-            out_class_file.write(c+'\n')
+            out_class_file.write(c + '\n')
 
         out_class_file.close()
         out_file.close()
-
 
 
 class YoloReader:
@@ -107,15 +106,15 @@ class YoloReader:
         else:
             self.classListPath = classListPath
 
-        print (filepath, self.classListPath)
+        print(filepath, self.classListPath)
 
         classesFile = open(self.classListPath, 'r')
         self.classes = classesFile.read().strip('\n').split('\n')
 
-        print (self.classes)
+        print(self.classes)
 
         imgSize = [image.height(), image.width(),
-                      1 if image.isGrayscale() else 3]
+                   1 if image.isGrayscale() else 3]
 
         self.imgSize = imgSize
 
@@ -123,7 +122,7 @@ class YoloReader:
         # try:
         self.parseYoloFormat()
         # except:
-            # pass
+        # pass
 
     def getShapes(self):
         return self.shapes
@@ -157,4 +156,4 @@ class YoloReader:
             label = self.classes[int(classIndex)]
 
             # Caveat: difficult flag is discarded when saved as yolo format.
-            self.addShape(trackid, label, xmin, ymin, xmax, ymax, False)
+            self.addShape(int(trackid), label, int(xmin), int(ymin), int(xmax), int(ymax), False)

@@ -81,7 +81,7 @@ class YOLOWriter:
 
             trackid, classIndex, xmin, ymin, xmax, ymax = self.BndBox2CustomLine(box, classList)
             print(trackid, xmin, ymin, xmax, ymax, classIndex)
-            out_file.write("%d, %d, %d, %d, %d, %d\n" % (trackid, xmin, ymin, xmax, ymax, classIndex))
+            out_file.write("%d %d %d %d %d %d\n" % (trackid, xmin, ymin, xmax, ymax, classIndex))
 
         print(classList)
         print(out_class_file)
@@ -152,7 +152,7 @@ class YoloReader:
         for bndBox in bndBoxFile:
             # trackid, classIndex, xcen, ycen, w, h = bndBox.split(' ')
             # label, xmin, ymin, xmax, ymax = self.yoloLine2Shape(classIndex, xcen, ycen, w, h)/
-            trackid, xmin, ymin, xmax, ymax, classIndex = bndBox.split(',')
+            trackid, xmin, ymin, xmax, ymax, classIndex = bndBox.split(' ')
             label = self.classes[int(classIndex)]
 
             # Caveat: difficult flag is discarded when saved as yolo format.
